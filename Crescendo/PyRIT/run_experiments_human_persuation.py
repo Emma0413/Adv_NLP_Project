@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 from pyrit.memory.sqlite_memory import SQLiteMemory
 from pyrit.memory.central_memory import CentralMemory
 from pyrit.prompt_target import OpenAIChatTarget
-from pyrit.executor.attack.core import AttackAdversarialConfig, AttackScoringConfig
+from pyrit.executor.attack.core import AttackAdversarialConfig, AttackScoringConfig, AttackConverterConfig
 from pyrit.executor.attack.multi_turn.crescendo import CrescendoAttack
+from pyrit.prompt_normalizer import PromptConverterConfiguration 
 from pyrit.score.true_false.self_ask_true_false_scorer import (
     SelfAskTrueFalseScorer,
     TrueFalseQuestion,
@@ -17,6 +18,7 @@ from pyrit.score.true_false.self_ask_true_false_scorer import (
 from pyrit.score.float_scale.self_ask_likert_scorer import SelfAskLikertScorer
 from pyrit.score.batch_scorer import BatchScorer
 from task_configs import TASK_CONFIGS
+from pyrit.prompt_converter.human_persuation_converter import HumanPersuasionConverter   # <-- NEW
 
 load_dotenv()
 
@@ -24,6 +26,7 @@ load_dotenv()
 # Use repeated 7s as "replications" per task
 MAX_TURNS_LIST = [7, 7, 7, 7, 7]
 MAX_BACKTRACKS_LIST = [0]
+PERSUASION_TECHNIQUE = "reciprocity"   # just test this one
 
 # All metric names across all tasks (for CSV header)
 ALL_METRIC_NAMES = sorted(
@@ -108,7 +111,22 @@ def build_scorers_for_task(
     )
 
     return scoring_config, objective_scorer, likert_scorers
+    
+def build_converter_config() -> AttackConverterConfig:
+    """
+    Creates an AttackConverterConfig that wraps every attacker request
+    with the chosen human-persuasion framing.
+    """
+    persuasion_converter = HumanPersuasionConverter(technique=PERSUASION_TECHNIQUE)
 
+    request_converters = PromptConverterConfiguration.from_converters(
+        converters=[persuasion_converter]
+    )
+
+    return AttackConverterConfig(
+        request_converters=request_converters,
+        # you *could* also add response_converters here if ever needed
+    )
 
 async def run_single_experiment(
     max_turns: int,
@@ -144,10 +162,13 @@ async def run_single_experiment(
         judge_llm,
     )
 
+    converter_config = build_converter_config()          # <-- NEW
+
     crescendo = CrescendoAttack(
         objective_target=victim,
         attack_adversarial_config=AttackAdversarialConfig(target=adversary),
         attack_scoring_config=scoring_config,
+        attack_converter_config=converter_config,        # <-- plug in
         max_turns=max_turns,
         max_backtracks=max_backtracks,
     )
@@ -203,6 +224,7 @@ async def run_single_experiment(
             "id": experiment_id,
             "task": task_name,
             "rep": rep_idx,
+            "persuasion_technique": PERSUASION_TECHNIQUE,  # <-- nice to log
             "max_turns": max_turns,
             "max_backtracks": max_backtracks,
             "outcome": str(result.outcome),
@@ -236,6 +258,7 @@ async def run_single_experiment(
             "id": experiment_id,
             "task": task_name,
             "rep": rep_idx,
+            "persuasion_technique": PERSUASION_TECHNIQUE,
             "max_turns": max_turns,
             "max_backtracks": max_backtracks,
             "outcome": "ERROR",
@@ -264,16 +287,17 @@ async def main():
 
     results = []
     exp_id = 1
-    # TASKS_TO_RUN = ["GovHack"] 
+    TASKS_TO_RUN = ["GovHack"] 
     # Loop over all tasks
     for task_name, task_cfg in TASK_CONFIGS.items():
-        # if task_name not in TASKS_TO_RUN:
-        #         continue
+        if task_name not in TASKS_TO_RUN:
+                continue
         objective = task_cfg["objective"]
         likert_metric_names = [m["name"] for m in task_cfg.get("likert_metrics", [])]
 
         # Replications for each task
         for rep_idx, turns in enumerate(MAX_TURNS_LIST, start=1):
+
             for backtracks in MAX_BACKTRACKS_LIST:
                 row = await run_single_experiment(
                     turns,
@@ -295,6 +319,7 @@ async def main():
         "id",
         "task",
         "rep",
+        "persuasion_technique",   # <-- add this
         "max_turns",
         "max_backtracks",
         "outcome",
