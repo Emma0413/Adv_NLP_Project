@@ -37,7 +37,7 @@ MAX_BACKTRACKS_LIST = [0]
 # ONE persuasion technique to test (must be one of the supported ones)
 # "authority_endorsement", "evidence_based", "expert_endorsement",
 # "logical_appeal", "misrepresentation"
-PERSUASION_TECHNIQUE = "authority_endorsement"
+PERSUASION_TECHNIQUE = "misrepresentation"
 
 # All metric names across all tasks (for CSV header)
 ALL_METRIC_NAMES = sorted(
@@ -171,7 +171,7 @@ async def run_single_experiment(
     CentralMemory.set_memory_instance(SQLiteMemory())
 
     # Roles
-    victim = OpenAIChatTarget(model_name="gpt-3.5-turbo")
+    victim = OpenAIChatTarget(model_name="gpt-4o")#gpt-3.5-turbo
     adversary = OpenAIChatTarget(model_name="gpt-4o-mini")
     judge_llm = OpenAIChatTarget(model_name="gpt-4o-mini")
 
@@ -307,12 +307,12 @@ async def main():
     results = []
     exp_id = 1
 
-    TASKS_TO_RUN = ["GovHack"]  # just this for debugging
+    #TASKS_TO_RUN = ["GovHack"]  # just this for debugging
 
     # Loop over selected tasks
     for task_name, task_cfg in TASK_CONFIGS.items():
-        if task_name not in TASKS_TO_RUN:
-            continue
+        # if task_name not in TASKS_TO_RUN:
+        #     continue
 
         objective = task_cfg["objective"]
         likert_metric_names = [m["name"] for m in task_cfg.get("likert_metrics", [])]

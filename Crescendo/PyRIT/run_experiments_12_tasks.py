@@ -135,7 +135,7 @@ async def run_single_experiment(
     CentralMemory.set_memory_instance(SQLiteMemory())
 
     # Roles
-    victim = OpenAIChatTarget(model_name="gpt-3.5-turbo")
+    victim = OpenAIChatTarget(model_name="gpt-4o")
     adversary = OpenAIChatTarget(model_name="gpt-4o-mini")
     judge_llm = OpenAIChatTarget(model_name="gpt-4o-mini")
 
