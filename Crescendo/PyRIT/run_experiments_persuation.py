@@ -48,8 +48,8 @@ ALL_METRIC_NAMES = sorted(
     }
 )
 
-MODELNAME = "gpt-3.5-turbo"
-# MODELNAME = "gpt-4o"
+# MODELNAME = "gpt-3.5-turbo"
+MODELNAME = "gpt-4o"
 
 
 # --- Helper: Universal Text Extractor ---
