@@ -37,7 +37,7 @@ MAX_BACKTRACKS_LIST = [0]
 # ONE persuasion technique to test (must be one of the supported ones)
 # "authority_endorsement", "evidence_based", "expert_endorsement",
 # "logical_appeal", "misrepresentation"
-PERSUASION_TECHNIQUE = "misrepresentation"
+PERSUASION_TECHNIQUE = "logical_appeal"
 
 # All metric names across all tasks (for CSV header)
 ALL_METRIC_NAMES = sorted(
@@ -47,6 +47,9 @@ ALL_METRIC_NAMES = sorted(
         for metric in cfg.get("likert_metrics", [])
     }
 )
+
+MODELNAME = "gpt-3.5-turbo"
+# MODELNAME = "gpt-4o"
 
 
 # --- Helper: Universal Text Extractor ---
@@ -171,7 +174,7 @@ async def run_single_experiment(
     CentralMemory.set_memory_instance(SQLiteMemory())
 
     # Roles
-    victim = OpenAIChatTarget(model_name="gpt-3.5-turbo")#gpt-3.5-turbo
+    victim = OpenAIChatTarget(model_name=MODELNAME)
     adversary = OpenAIChatTarget(model_name="gpt-4o-mini")
     judge_llm = OpenAIChatTarget(model_name="gpt-4o-mini")
 
@@ -292,12 +295,14 @@ async def run_single_experiment(
 
 async def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    batch_folder_name = f"batch_{timestamp}"
+    batch_folder_name = f"batch_{PERSUASION_TECHNIQUE}_{MODELNAME}_{timestamp}"
     output_folder = os.path.join("experiment_results", batch_folder_name)
 
     os.makedirs(output_folder, exist_ok=True)
     CentralMemory.set_memory_instance(SQLiteMemory())
     logging.getLogger().setLevel(logging.WARNING)
+
+    await asyncio.sleep(30)
 
     print("=== Batch Starting ===")
     print(f"Tasks: {', '.join(TASK_CONFIGS.keys())}")

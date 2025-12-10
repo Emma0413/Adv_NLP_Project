@@ -34,6 +34,8 @@ ALL_METRIC_NAMES = sorted(
     }
 )
 
+MODELNAME = "gpt-4o"
+# MODELNAME = "gpt-3.5-turbo"
 
 # --- Helper: Universal Text Extractor ---
 def get_message_content(entry):
@@ -135,7 +137,7 @@ async def run_single_experiment(
     CentralMemory.set_memory_instance(SQLiteMemory())
 
     # Roles
-    victim = OpenAIChatTarget(model_name="gpt-4o")
+    victim = OpenAIChatTarget(model_name=MODELNAME)
     adversary = OpenAIChatTarget(model_name="gpt-4o-mini")
     judge_llm = OpenAIChatTarget(model_name="gpt-4o-mini")
 
@@ -251,7 +253,7 @@ async def run_single_experiment(
 
 async def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    batch_folder_name = f"batch_{timestamp}"
+    batch_folder_name = f"batch_base_{MODELNAME}_{timestamp}"
     output_folder = os.path.join("experiment_results", batch_folder_name)
 
     os.makedirs(output_folder, exist_ok=True)
