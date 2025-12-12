@@ -15,9 +15,10 @@ def main():
     # ---------------------------------------
     batches = {
         "GPT-3.5": "experiment_results/batch_2025-12-01_04-38-37",
-        "GPT-4o": "experiment_results/batch_2025-12-01_06-11-45",
         "GPT-3.5 + misrepresentation": "experiment_results/batch_2025-12-01_15-49-14",
-        "GPT-4o + misrepresentation": "experiment_results/batch_2025-12-01_08-14-08",
+        "GPT-3.5 + logical appeal": "experiment_results/batch_logical_appeal_gpt-3.5-turbo_2025-12-09_18-40-31",
+        "GPT-3.5 + authority endorsement": "experiment_results/batch_authority_endorsement_gpt-3.5-turbo_2025-12-09_03-27-24",
+        "GPT-3.5 + expert endorsement": "experiment_results/batch_expert_endorsement_gpt-3.5-turbo_2025-12-09_15-19-38",
     }
 
     harm_results = {}
@@ -45,29 +46,26 @@ def main():
     # ---------------------------------------
     # 3. Build plot (Two x-axis groups: harm, violence)
     # ---------------------------------------
-    categories = ["harm_last", "violence_last"]
-    x = np.arange(len(categories))
-
     batch_labels = list(batches.keys())
-    n_batches = len(batch_labels)
-    width = 0.8 / n_batches  # distribute bars within category
+    n = len(batch_labels)
 
-    plt.figure(figsize=(12, 6))
+    harm_vals = [harm_results.get(b, 0.0) for b in batch_labels]
+    viol_vals = [violence_results.get(b, 0.0) for b in batch_labels]
 
-    for i, batch in enumerate(batch_labels):
-        offsets = x - 0.4 + i * width + width / 2
+    gap = 1  # space between the two groups
+    harm_x = np.arange(n)
+    viol_x = np.arange(n) + n + gap
 
-        values = [
-            harm_results.get(batch, 0.0),
-            violence_results.get(batch, 0.0)
-        ]
+    fig, ax = plt.subplots(figsize=(14, 6))
 
-        bars = plt.bar(offsets, values, width=width, label=batch)
+    bars1 = ax.bar(harm_x, harm_vals, width=0.8, label="Harm")
+    bars2 = ax.bar(viol_x, viol_vals, width=0.8, label="Violence")
 
-        # Add text above bars
+    # Value labels
+    for bars in (bars1, bars2):
         for bar in bars:
             h = bar.get_height()
-            plt.text(
+            ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 h + 0.01,
                 f"{h:.2f}",
@@ -76,17 +74,29 @@ def main():
                 fontsize=8
             )
 
-    plt.xticks(x, ["Harm", "Violence"])
-    plt.ylabel("Average Score")
-    plt.title("Bomb Task – Harm & Violence Comparison")
-    plt.legend()
+    # X ticks: show batch names twice (once under Harm group, once under Violence group)
+    xticks = np.concatenate([harm_x, viol_x])
+    xlabels = batch_labels + batch_labels
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabels, rotation=30, ha="right")
+
+    # Visual separator + group labels
+    ax.axvline(n - 0.5 + gap / 2, linestyle="--")
+    ax.text(harm_x.mean(), -0.12, "", transform=ax.get_xaxis_transform(),
+            ha="center", va="top", fontsize=10)
+    ax.text(viol_x.mean(), -0.12, "", transform=ax.get_xaxis_transform(),
+            ha="center", va="top", fontsize=10)
+
+    ax.set_ylabel("Average Score")
+    ax.set_title("Bomb Task – Harm & Violence")
+    ax.legend()
     plt.tight_layout()
 
     # Save
     out_dir = "bomb_summary_compare"
     os.makedirs(out_dir, exist_ok=True)
 
-    out_path = os.path.join(out_dir, "bomb_last_score.png")
+    out_path = os.path.join(out_dir, "gpt3.5_bomb_last_score.png")
     plt.savefig(out_path, dpi=300)
     print(f"Saved plot to: {out_path}")
 

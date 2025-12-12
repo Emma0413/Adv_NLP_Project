@@ -10,8 +10,8 @@ def main():
     batches: Dict[str, str] = {
         "GPT 3.5": os.path.join("experiment_results", "batch_2025-12-01_04-38-37"),
         "GPT 4o": os.path.join("experiment_results", "batch_2025-12-01_06-11-45"),
-        "GPT 3.5 + misrepresentation": os.path.join("experiment_results", "batch_2025-12-01_15-49-14"),
-        "GPT 4o + misrepresentation": os.path.join("experiment_results", "batch_2025-12-01_08-14-08"),
+        "GPT 3.5 + expert endorsement": os.path.join("experiment_results", "batch_expert_endorsement_gpt-3.5-turbo_2025-12-09_15-19-38"),
+        "GPT 4o + expert endorsement": os.path.join("experiment_results", "batch_expert_endorsement_gpt-4o-turbo_2025-12-11_09-42-56"),
     }
 
     # --------------------------------------------------------
@@ -102,7 +102,7 @@ def main():
     # --------------------------------------------------------
     output_folder = "summary_comparisons"
     os.makedirs(output_folder, exist_ok=True)
-    output_path = os.path.join(output_folder, "success_rate_compare.png")
+    output_path = os.path.join(output_folder, "expert_endorsement_success_rate_compare.png")
     plt.savefig(output_path, dpi=300)
 
     print(f"Figure saved to: {output_path}")

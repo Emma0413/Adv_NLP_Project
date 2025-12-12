@@ -20,10 +20,11 @@ def main():
     # 1. Configure model folders
     # -----------------------------------------------
     batches = {
-        "GPT-3.5": "experiment_results/batch_2025-12-01_04-38-37",
         "GPT-4o": "experiment_results/batch_2025-12-01_06-11-45",
-        "GPT-3.5 + misrepresentation": "experiment_results/batch_2025-12-01_15-49-14",
         "GPT-4o + misrepresentation": "experiment_results/batch_2025-12-01_08-14-08",
+        "GPT-4o + logical appeal": "experiment_results/batch_logical_appeal_gpt-4o_2025-12-10_05-02-50",
+        "GPT-4o + authority endorsement": "experiment_results/batch_authority_endorsement_gpt-4o_2025-12-10_17-50-57",
+        "GPT-4o + expert endorsement": "experiment_results/batch_expert_endorsement_gpt-4o-turbo_2025-12-11_09-42-56",
     }
 
     results = []
@@ -50,55 +51,59 @@ def main():
     print(result_df)
 
     # -----------------------------------------------
-    # 3. Plot: X-axis = Harm, Violence
+    # 3. Plot: 10 bars total (5 Harm, then 5 Violence)
     # -----------------------------------------------
-    categories = ["Harm", "Violence"]
     models = result_df["Model"].tolist()
-
     harm_vals = result_df["Harm"].tolist()
     violence_vals = result_df["Violence"].tolist()
 
-    values = np.array([harm_vals, violence_vals])  # shape: (2 categories × n_models)
+    n = len(models)
+    gap = 1  # spacing between Harm group and Violence group
 
-    n_categories = len(categories)
-    n_models = len(models)
+    harm_x = np.arange(n)
+    viol_x = np.arange(n) + n + gap
 
-    x = np.arange(n_categories)
-    width = 0.12  # width per bar (adjust for more models)
+    fig, ax = plt.subplots(figsize=(14, 6))
 
-    plt.figure(figsize=(12, 6))
+    bars1 = ax.bar(harm_x, harm_vals, width=0.8, label="Harm")
+    bars2 = ax.bar(viol_x, violence_vals, width=0.8, label="Violence")
 
-    # Plot each model
-    for i in range(n_models):
-        plt.bar(
-            x + (i - n_models/2) * width + width/2,
-            values[:, i],
-            width=width,
-            label=models[i]
-        )
-
-        # Add text labels
-        for j, val in enumerate(values[:, i]):
-            plt.text(
-                x[j] + (i - n_models/2) * width + width/2,
-                val,
-                f"{val:.2f}",
+    # Add text labels
+    for bars in (bars1, bars2):
+        for bar in bars:
+            h = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                h + 0.01,
+                f"{h:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=9
             )
 
-    plt.xticks(x, categories, fontsize=12)
-    plt.ylabel("Average Max Per-Turn Score")
-    plt.title("Bomb Task — Harm & Violence (Max Per-Turn)")
-    plt.legend(title="")
+    # X ticks: show model names under each group
+    xticks = np.concatenate([harm_x, viol_x])
+    xlabels = models + models
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabels, rotation=30, ha="right", fontsize=10)
+
+    # Separator + group labels
+    ax.axvline(n - 0.5 + gap / 2, linestyle="--")
+    ax.text(harm_x.mean(), -0.12, "", transform=ax.get_xaxis_transform(),
+            ha="center", va="top", fontsize=11)
+    ax.text(viol_x.mean(), -0.12, "", transform=ax.get_xaxis_transform(),
+            ha="center", va="top", fontsize=11)
+
+    ax.set_ylabel("Average Max Per-Turn Score")
+    ax.set_title("Bomb Task — Max Per-Turn")
+    ax.legend()
     plt.tight_layout()
 
     # Save
     out_dir = "bomb_summary_compare"
     os.makedirs(out_dir, exist_ok=True)
 
-    out_path = os.path.join(out_dir, "bomb_max_score_per_turn.png")
+    out_path = os.path.join(out_dir, "gpt4o_bomb_max_score_per_turn.png")
     plt.savefig(out_path, dpi=300)
 
     plt.show()
